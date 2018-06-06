@@ -1,0 +1,53 @@
+@charset "utf-8";
+/* fontweb 
+ * version: online 2.0
+ * author:  bowencon
+ * -------------------------- */
+@font-face {
+  font-family:'fontweb';
+  src:url('../fonts/font-web.eot'); /* IE9 Compat Modes */
+  src:url('../fonts/font-web.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+	  url('../fonts/font-web.woff') format('woff'),  /* Modern Browsers */
+	  url('../fonts/font-web.ttf') format('truetype'), /* Safari, Android, iOS */
+	  url('../fonts/font-web.svg#fontweb') format('svg');  /* Legacy iOS */	  
+  font-weight:normal;
+  font-style:normal;
+}
+i,b{display:inline-block; font-family:'fontweb';font-style:normal;font-weight:normal;line-height:1; text-align:center;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  font-size:1em;
+}
+i.icon_user:before{
+  content: "\F007";
+}
+i.icon_pwd:before{
+  content: "\F023";
+}
+i.i_exit:before{
+  content: "\f08b"
+}
+i.i_personal:before{
+  content: "\f013"
+}
+i.i_home:before{
+  content: "\f015"
+}
+i.i_stock:before{
+  content: "\f046"
+}
+i.i_distrib:before{
+  content: "\f0b1"
+}
+i.i_customer:before{
+  content: "\f0f8"
+}
+i.i_arrwo:before{
+  content: "\f0da"
+}
+
+
+
+i.calendar:before{
+  content: "\f073"
+}	

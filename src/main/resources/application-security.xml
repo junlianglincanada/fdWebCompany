@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<b:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:b="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+        http://www.springframework.org/schema/security  http://www.springframework.org/schema/security/spring-security-3.2.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.2.xsd  ">
+
+	<b:bean id="customAuthenticationSuccessHandler"
+		class="com.wondersgroup.operation.util.security.CustomAuthenticationSuccessHandler">
+		<b:property name="defaultTargetUrl" value="/default.do" />
+	</b:bean>
+	
+	<b:bean id="customAuthenticationFailureHandler"
+		class="com.wondersgroup.operation.util.security.CustomAuthenticationFailureHandler">
+		<b:property name="defaultTargetUrl" value="/login.jsp?login_error=1" />
+	</b:bean>
+	<!-- 不要过滤图片等静态资源 -->
+	<http pattern="/**/*.jpg" security="none" />
+	<http pattern="/**/*.xlsx" security="none" />
+	<http pattern="/**/*.png" security="none" />
+	<http pattern="/**/*.gif" security="none" />
+	<http pattern="/**/*.css" security="none" />
+	<http pattern="/**/*.js" security="none" />
+	<http pattern="/forgetPwd.jsp" security="none" />
+	<http pattern="/system/userMgr/resetPassword.do" security="none" />
+	<http pattern="/resetPwd" security="none" />
+	<http pattern="/geography/**" security="none" />
+	
+	<http pattern="/account-establish.jsp" security="none" />
+	<http pattern="/reg/**" security="none" />
+	<http pattern="/forgot/**" security="none" />
+    <http pattern="/base/getAdminRegion/**" security="none" />
+    <http pattern="/register/**" security="none" />
+    <http pattern="/forgetPwd/**" security="none" />
+    <http pattern="/webservice/**" security="none" />
+    <http pattern="/monitorFace/**" security="none" />
+    <http pattern="/accredit/**" security="none" />
+     <http pattern="/question/**" security="none" />
+     <http pattern="/checkCode/**" security="none" />
+<!--      <http pattern="/j_spring_security_check" security="none" /> -->
+     
+	
+   	<!-- 注册页面 -->
+	<!-- 这个元素用来在你的应用程序中启用基于安全的注解 <global-method-security pre-post-annotations="enabled" 
+		access-decision-manager-ref="myAccessDecisionManager"/> -->
+
+	<!-- 防止referer 跨域攻击 -->
+	<b:bean id="firstFilter" class="com.wondersgroup.operation.util.refererFilter"/>
+
+	<!-- 配置页面访问权限 -->
+	<http auto-config='true' access-denied-page="/login.jsp?login_error=3">
+		<custom-filter ref="firstFilter"  before="FORM_LOGIN_FILTER"/>
+
+		<!-- 登陆页面和忘记密码页面不过滤 <intercept-url pattern="/login.jsp" access="IS_AUTHENTICATED_ANONYMOUSLY" 
+			/> <intercept-url pattern="/forgotpassword.jsp"/> -->
+		<form-login login-page="/login.jsp" 
+			authentication-success-handler-ref="customAuthenticationSuccessHandler"
+			authentication-failure-handler-ref="customAuthenticationFailureHandler"
+			default-target-url="/default.do" always-use-default-target="true" />
+		<form-login login-page="/reg_third.jsp"
+			authentication-success-handler-ref="customAuthenticationSuccessHandler"
+			authentication-failure-handler-ref="customAuthenticationFailureHandler"
+			default-target-url="/default.do" always-use-default-target="true" />
+		<!-- 注册页面 接口-->
+
+		<intercept-url pattern="/reg_third.jsp" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
+		<intercept-url pattern="/login.jsp" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
+		<intercept-url pattern="/**" access="ROLE_TEST" />
+		
+		<!-- "记住我"功能，采用持久化策略（将用户的登录信息存放在数据库表中） -->
+		<!-- <remember-me data-source-ref="dataSource" /> -->
+
+		<!-- 实现免登陆验证 -->
+		<!-- 只能登陆一次 -->
+		<session-management session-authentication-error-url="/402.jsp" invalid-session-url="/sessionTimeout.jsp">
+			<concurrency-control max-sessions="1" expired-url="/login.jsp?login_error=2"
+				error-if-maximum-exceeded="false" />
+		</session-management>
+		<!-- 退出设置 session无效-->
+		 <logout invalidate-session="true" logout-url="/logout"  
+        logout-success-url="/login.jsp" />  
+		
+		<csrf />
+
+		<!-- 增加一个自定义的filter，放在FILTER_SECURITY_INTERCEPTOR之前， 实现用户、角色、权限、资源的数据库管理。 
+			11/3/23 -->
+		<!-- <custom-filter ref="myFilter" before="FILTER_SECURITY_INTERCEPTOR"/> -->
+	</http>
+
+	<!-- 将用户信息硬编码在xml文件中 -->
+	<!-- <authentication-manager> <authentication-provider> <user-service> <user 
+		name="admin" password="admin" authorities="ROLE_ADMIN,ROLE_USER" /> <user 
+		name="user" password="user" authorities="ROLE_USER" /> </user-service> </authentication-provider> 
+		</authentication-manager> -->
+
+	<!-- 数据中查找用户 <authentication-manager alias="myAuthenticationManager"> <authentication-provider> 
+		<jdbc-user-service data-source-ref="dataSource" users-by-username-query="select 
+		username,password,status as enabled from user where username=?" authorities-by-username-query="select 
+		u.username,r.name as authority from user u join user_role ur on u.id=ur.user_id 
+		join role r on r.id=ur.role_id where u.username=?" /> </authentication-provider> 
+		</authentication-manager> -->
+	<authentication-manager>
+		<authentication-provider ref="daoAuthenticationProvider" />
+	</authentication-manager>
+	<b:bean id="daoAuthenticationProvider"
+		class="org.springframework.security.authentication.dao.DaoAuthenticationProvider">
+		<b:property name="userDetailsService" ref="userService"></b:property>
+		<b:property name="passwordEncoder" ref="passwordEncoder"></b:property>
+		<b:property name="hideUserNotFoundExceptions" value="false" />
+	</b:bean>
+	<!-- 实现了UserDetailsService的Bean -->
+	<!-- 注意能够为authentication-manager 设置alias别名 -->
+	<!-- <authentication-manager alias="myAuthenticationManager"> <authentication-provider 
+		user-service-ref="userDetailService"> <password-encoder ref="passwordEncoder"> 
+		</password-encoder> </authentication-provider> </authentication-manager> -->
+
+
+	<!-- 一个自定义的filter，必须包含authenticationManager, accessDecisionManager,securityMetadataSource三个属性。 -->
+	<!-- <b:bean id="myFilter" class="com.wondersgroup.core.security.MyFilterSecurityInterceptor"> 
+		用户拥有的权限 <b:property name="authenticationManager" ref="myAuthenticationManager"></b:property> 
+		用户是否拥有所请求资源的权限 <b:property name="accessDecisionManager" ref="myAccessDecisionManager"></b:property> 
+		资源与权限对应关系 <b:property name="securityMetadataSource" ref="mySecurityMetadataSource"></b:property> 
+		</b:bean> <b:bean id="mySecurityMetadataSource" class="com.wondersgroup.core.security.MyInvocationSecurityMetadataSourceService"> 
+		<b:constructor-arg name="resourcesDao" ref="resDao"></b:constructor-arg> 
+		</b:bean> <b:bean id="myAccessDecisionManager" class="com.wondersgroup.core.security.MyAccessDecisionManager"/> -->
+	<!-- <b:bean id="passwordEncoder"
+		class="org.springframework.security.authentication.encoding.Md5PasswordEncoder"/> -->
+	<b:bean id="passwordEncoder" class="com.wondersgroup.operation.util.tools.MyMd5PasswordEncoder"/>
+		
+	<!-- <b:bean id="resourcesDao" class="com.wondersgroup.security.dao.impl.ResourcesDaoImpl"/> 
+		<b:bean id="userDao" class="com.wondersgroup.security.dao.impl.UserDaoImpl"/> -->
+	<b:bean id="userService" class="com.wondersgroup.operation.util.security.UserService" />
+</b:beans>
